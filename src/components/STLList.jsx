@@ -1,18 +1,29 @@
 import React from "react";
 import STLViewer from "./STLViewer";
 
+import { SearchContext } from "../Layout";
+
 import styles from "./STLList.module.css";
 
 const PAGE_SIZE = 12;
 
 const STLList = ({ stlFiles = [] }) => {
+  const { searchText } = React.useContext(SearchContext);
   const [page, setPage] = React.useState(1);
 
   const startIndex = (page - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
-  const stlFilesPage = stlFiles.slice(startIndex, endIndex);
+  const stlFilesPage = stlFiles
+    .filter((stlfile) =>
+      stlfile.name.toLowerCase().includes(searchText.toLowerCase())
+    )
+    .slice(startIndex, endIndex);
 
-  const pageCount = Math.ceil(stlFiles.length / PAGE_SIZE);
+  const pageCount = Math.ceil(
+    stlFiles.filter((stlfile) =>
+      stlfile.name.toLowerCase().includes(searchText.toLowerCase())
+    ).length / PAGE_SIZE
+  );
 
   const handlePrevPage = () => {
     setPage((prevPage) => Math.max(prevPage - 1, 1));
@@ -24,14 +35,7 @@ const STLList = ({ stlFiles = [] }) => {
 
   return (
     <>
-      <div
-        style={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}
-      >
-        {stlFilesPage.map((stlfile) => (
-          <STLViewer key={stlfile.path} stlFile={stlfile} />
-        ))}
-      </div>
-      <div className={styles.paginationController}>
+    <div className={styles.paginationController}>
         <button onClick={handlePrevPage} disabled={page === 1}>
           Prev
         </button>
@@ -41,6 +45,13 @@ const STLList = ({ stlFiles = [] }) => {
         <button onClick={handleNextPage} disabled={page === pageCount}>
           Next
         </button>
+      </div>
+      <div className={styles.stlList}>
+        {stlFilesPage.map((stlfile) => (
+          <div key={stlfile.path} className={styles.stlViewer}>
+            <STLViewer stlFile={stlfile} />
+          </div>
+        ))}
       </div>
     </>
   );
