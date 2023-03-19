@@ -11,6 +11,9 @@ const STLViewer = ({ stlFile }) => {
   const { path: stlFilePath, image } = stlFile;
 
   React.useEffect(() => {
+    const width = 500;
+    const height = 500;
+
     const img = imgRef.current;
     if (image) {
       img.src = `file://${image}`;
@@ -20,7 +23,7 @@ const STLViewer = ({ stlFile }) => {
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     const camera = new THREE.PerspectiveCamera(
       75,
-      img.width / img.height,
+      1,
       0.1,
       1000
     );
@@ -48,7 +51,7 @@ const STLViewer = ({ stlFile }) => {
       camera.position.set(center.x, center.y, fitHeightDistance * 2.5);
       camera.lookAt(center);
 
-      renderer.setSize(img.width, img.height);
+      renderer.setSize(width, height);
 
       renderer.render(scene, camera);
 
@@ -68,7 +71,7 @@ const STLViewer = ({ stlFile }) => {
       <Link to={`/stl/${encodeURIComponent(stlFilePath)}`}>
         <img
           ref={imgRef}
-          style={{ cursor: "pointer", height: "250px", width: "250px" }}
+          style={{ cursor: "pointer" }}
         />
         <div>
           {stlFile.name} ({stlFile.size})
