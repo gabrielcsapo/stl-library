@@ -1,0 +1,6 @@
+.container {
+  border: 1px solid var(--ifm-toc-border-color);
+  width: 265px;
+  margin: 10px;
+  padding: 10px;
+}

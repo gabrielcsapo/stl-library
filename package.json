@@ -1,0 +1,41 @@
+{
+  "name": "stl-preview",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"electron ./electron.js\"",
+    "build": "vite build && electron-builder",
+    "serve": "vite preview",
+    "electron": "electron ."
+  },
+  "dependencies": {
+    "@scalenc/stl-to-png": "^1.0.5",
+    "fast-glob": "^3.2.12",
+    "fs-extra": "^11.1.0",
+    "image-data-uri": "^2.0.1",
+    "infima": "^0.2.0-alpha.43",
+    "path-browserify": "^1.0.1",
+    "pretty-bytes": "^6.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-fps": "^1.0.6",
+    "react-router-dom": "^6.9.0",
+    "three": "^0.150.1"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.2.10",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@vitejs/plugin-react": "^3.1.0",
+    "@vitejs/plugin-react-refresh": "^1.3.6",
+    "concurrently": "^7.6.0",
+    "electron": "^23.1.4",
+    "electron-builder": "^23.6.0",
+    "node-gyp": "^9.3.1",
+    "vite": "^4.2.0"
+  },
+  "volta": {
+    "node": "16.16.0"
+  }
+}
