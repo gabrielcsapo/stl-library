@@ -6,19 +6,19 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import { SearchContext } from "../Layout";
 
+import styles from "./View.module.css";
+
 const STLViewer = () => {
   const { stlFiles } = useContext(SearchContext);
 
   const { stlFilePath } = useParams();
-  const found = stlFiles[stlFilePath];
+  const found = stlFiles.get(stlFilePath);
 
   const mountRef = useRef(null);
   const rendererRef = useRef(null);
   const requestRef = useRef(null);
 
-  const canvasAspect = mountRef.current
-    ? mountRef.current.clientWidth / mountRef.current.clientHeight
-    : 1;
+  const canvasAspect = 1;
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -97,10 +97,12 @@ const STLViewer = () => {
   return (
     <>
       <br />
-      <div
-        style={{ width: "300px", height: "250px", margin: "0 auto" }}
-        ref={mountRef}
-      />
+      <div className={styles.stlViewer}>
+        <div
+          style={{ width: "500px", height: "500px", margin: "0 auto" }}
+          ref={mountRef}
+        />
+      </div>
       <hr />
       {found ? (
         <div>
