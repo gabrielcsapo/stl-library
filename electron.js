@@ -51,11 +51,20 @@ app.on("window-all-closed", () => {
   }
 });
 
+ipcMain.on("render-stl", async (event, stlFilePath, imageData) => {
+  const stlData = fs.readFileSync(stlFilePath);
+  const hashSum = crypto.createHash("sha256");
+  hashSum.update(stlData);
+
+  const hex = hashSum.digest("hex");
+  const cachedFilePath = path.resolve(__dirname, "tmp", `${hex}.png`);
+
+  imageDataURI.outputFile(imageData, cachedFilePath);
+});
+
 ipcMain.on("scan-for-stl-files", async (event, startDir) => {
   const prettyBytes = await import("pretty-bytes");
   const filesFound = await fastGlob(`${startDir}/**/*.stl`);
-
-  const filesUpdate = [];
 
   for (const filePath of filesFound) {
     const stats = await fs.stat(filePath);

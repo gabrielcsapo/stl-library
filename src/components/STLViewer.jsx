@@ -21,12 +21,7 @@ const STLViewer = ({ stlFile }) => {
     }
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      1,
-      0.1,
-      1000
-    );
+    const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
     const scene = new THREE.Scene();
     let mesh;
 
@@ -69,10 +64,7 @@ const STLViewer = ({ stlFile }) => {
   return (
     <div className={style.container}>
       <Link to={`/stl/${encodeURIComponent(stlFilePath)}`}>
-        <img
-          ref={imgRef}
-          style={{ cursor: "pointer" }}
-        />
+        <img ref={imgRef} style={{ cursor: "pointer" }} />
         <div>
           {stlFile.name} ({stlFile.size})
         </div>
