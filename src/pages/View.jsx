@@ -1,12 +1,16 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useContext } from "react";
 import { useParams } from "react-router-dom";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-const STLViewer = ({ stlFiles }) => {
+import { SearchContext } from "../Layout";
+
+const STLViewer = () => {
+  const { stlFiles } = useContext(SearchContext);
+
   const { stlFilePath } = useParams();
-  const found = stlFiles.find((file) => file.path === stlFilePath);
+  const found = stlFiles[stlFilePath];
 
   const mountRef = useRef(null);
   const rendererRef = useRef(null);

@@ -1,16 +1,28 @@
 import { Link } from "react-router-dom";
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 
 export const SearchContext = createContext({
   searchText: "",
-  directoryText: "",
+  directoryText: "/Users/gabrielcsapo/Downloads",
+  stlFiles: new Map(),
   setSearchText: () => {},
   setDirectoryText: () => {},
+  setSTLFiles: () => {},
 });
 
 export default function Layout({ children }) {
   const [searchText, setSearchText] = useState("");
   const [directoryText, setDirectoryText] = useState("");
+
+  const [stlFiles, setSTLFiles] = useState(new Map());
+
+  useEffect(() => {
+    if (!directoryText) return;
+
+    window.electron.scanForSTLFiles(directoryText, (fileFound) => {
+      setSTLFiles((map) => new Map(map.set(fileFound.path, fileFound)));
+    });
+  }, [directoryText]);
 
   const handleDirectorySelect = async () => {
     const { dialog } = window.electron;
@@ -18,13 +30,21 @@ export default function Layout({ children }) {
       properties: ["openDirectory"],
     });
     if (!result.canceled) {
+      console.log("trying to set", result.filePaths[0]);
       setDirectoryText(result.filePaths[0]);
     }
   };
 
   return (
     <SearchContext.Provider
-      value={{ searchText, setSearchText, directoryText, setDirectoryText }}
+      value={{
+        searchText,
+        setSearchText,
+        directoryText,
+        setDirectoryText,
+        stlFiles,
+        setSTLFiles,
+      }}
     >
       <nav className="navbar">
         <div className="navbar__inner">
