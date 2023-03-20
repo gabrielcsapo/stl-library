@@ -11,11 +11,11 @@ import View from "./pages/View";
 const startDir = "/Users/gabrielcsapo/Downloads"; // Change this to the folder where you want to start the search
 
 const App = () => {
-  const [stlFiles, setSTLFiles] = React.useState([]);
+  const [stlFiles, setSTLFiles] = React.useState(new Map());
 
   React.useEffect(() => {
-    window.electron.scanForSTLFiles(startDir, (filesFound) => {
-      setSTLFiles(filesFound);
+    window.electron.scanForSTLFiles(startDir, (fileFound) => {
+      setSTLFiles((map) => new Map(map.set(fileFound.path, fileFound)));
     });
   }, []);
 
@@ -25,10 +25,13 @@ const App = () => {
     <Router>
       <Layout>
         <Routes>
-          <Route path="/" element={<Home stlFiles={stlFiles} />} />
+          <Route
+            path="/"
+            element={<Home stlFiles={Array.from(stlFiles.values())} />}
+          />
           <Route
             path="/stl/:stlFilePath"
-            element={<View stlFiles={stlFiles} />}
+            element={<View stlFiles={Array.from(stlFiles.values())} />}
           />
         </Routes>
       </Layout>

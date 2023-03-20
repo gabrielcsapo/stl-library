@@ -61,15 +61,13 @@ ipcMain.on("scan-for-stl-files", async (event, startDir) => {
     const stats = await fs.stat(filePath);
     const renderedSTLPng = await getRenderedSTLPng(filePath);
 
-    filesUpdate.push({
+    event.sender.send("stl-file-found", {
       name: path.basename(filePath),
       path: filePath,
       image: renderedSTLPng,
       size: prettyBytes.default(stats.size),
     });
   }
-
-  event.sender.send("stl-files-found", filesUpdate);
 });
 
 app.on("activate", () => {

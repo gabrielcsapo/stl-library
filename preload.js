@@ -8,8 +8,8 @@ contextBridge.exposeInMainWorld("electron", {
   isDev,
   scanForSTLFiles: (startDir, callback) => {
     ipcRenderer.send("scan-for-stl-files", startDir);
-    ipcRenderer.on("stl-files-found", (event, filesFound) => {
-      callback(filesFound);
+    ipcRenderer.on("stl-file-found", (event, fileFound) => {
+      callback(fileFound);
     });
   },
   stlRendered: (stlFilePath, imageData) => {
