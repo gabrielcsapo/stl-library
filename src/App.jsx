@@ -2,7 +2,7 @@ import "infima/dist/css/default/default.css";
 import "./App.css";
 
 import React from "react";
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route } from "react-router-dom";
 
 import Layout from "./Layout";
 import Home from "./pages/Home";
@@ -19,8 +19,10 @@ const App = () => {
     });
   }, []);
 
+  const Router = window.electron.isDev ? HashRouter : BrowserRouter;
+
   return (
-    <HashRouter>
+    <Router>
       <Layout>
         <Routes>
           <Route path="/" element={<Home stlFiles={stlFiles} />} />
@@ -30,7 +32,7 @@ const App = () => {
           />
         </Routes>
       </Layout>
-    </HashRouter>
+    </Router>
   );
 };
 

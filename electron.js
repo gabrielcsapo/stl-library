@@ -5,17 +5,19 @@ const fastGlob = require("fast-glob");
 const crypto = require("crypto");
 const imageDataURI = require("image-data-uri");
 
-function getRenderedSTLPng(filePath) {
-  const stlData = fs.readFileSync(filePath);
+require("@electron/remote/main").initialize();
+
+async function getRenderedSTLPng(filePath) {
+  const stlData = await fs.readFile(filePath);
   const hashSum = crypto.createHash("sha256");
   hashSum.update(stlData);
 
   const hex = hashSum.digest("hex");
   const cachedFilePath = path.resolve(__dirname, "tmp", `${hex}.png`);
 
-  fs.ensureDirSync(path.dirname(cachedFilePath));
+  await fs.ensureDir(path.dirname(cachedFilePath));
 
-  if (fs.existsSync(cachedFilePath)) {
+  if (await fs.pathExists(cachedFilePath)) {
     return cachedFilePath;
   }
 
@@ -29,6 +31,7 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: true,
+      enableRemoteModule: true,
       webSecurity: false,
       preload: path.join(__dirname, "preload.js"),
     },
@@ -36,6 +39,8 @@ function createWindow() {
 
   win.loadURL("http://localhost:3000");
   win.webContents.openDevTools();
+
+  require("@electron/remote/main").enable(win.webContents);
 }
 
 app.whenReady().then(createWindow);
@@ -46,30 +51,20 @@ app.on("window-all-closed", () => {
   }
 });
 
-ipcMain.on("render-stl", async (event, stlFilePath, imageData) => {
-  const stlData = fs.readFileSync(stlFilePath);
-  const hashSum = crypto.createHash("sha256");
-  hashSum.update(stlData);
-
-  const hex = hashSum.digest("hex");
-  const cachedFilePath = path.resolve(__dirname, "tmp", `${hex}.png`);
-
-  imageDataURI.outputFile(imageData, cachedFilePath);
-});
-
 ipcMain.on("scan-for-stl-files", async (event, startDir) => {
   const prettyBytes = await import("pretty-bytes");
-  const filesFound = fastGlob.sync(`${startDir}/**/*.stl`);
+  const filesFound = await fastGlob(`${startDir}/**/*.stl`);
 
   const filesUpdate = [];
 
   for (const filePath of filesFound) {
-    const stats = fs.statSync(filePath);
+    const stats = await fs.stat(filePath);
+    const renderedSTLPng = await getRenderedSTLPng(filePath);
 
     filesUpdate.push({
       name: path.basename(filePath),
       path: filePath,
-      image: getRenderedSTLPng(filePath),
+      image: renderedSTLPng,
       size: prettyBytes.default(stats.size),
     });
   }
