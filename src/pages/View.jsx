@@ -12,21 +12,23 @@ const STLViewer = ({ stlFiles }) => {
   const rendererRef = useRef(null);
   const requestRef = useRef(null);
 
+  const canvasAspect = mountRef.current
+    ? mountRef.current.clientWidth / mountRef.current.clientHeight
+    : 1;
+
   useEffect(() => {
-    const mount = mountRef.current;
-    const canvasAspect = mount.clientWidth / mount.clientHeight;
+    if (!mountRef.current) return;
     let renderer, camera, scene, geometry, material, mesh, controls;
 
     const loader = new STLLoader();
 
     const absolutePath = `file://${stlFilePath}`;
 
-    // Calculate the aspect ratio based on the canvas size
     camera = new THREE.PerspectiveCamera(75, canvasAspect, 0.1, 1000);
 
     renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
     renderer.setClearColor(0xffffff, 0);
-    mount.appendChild(renderer.domElement);
+    mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
     controls = new OrbitControls(camera, renderer.domElement);
@@ -35,11 +37,13 @@ const STLViewer = ({ stlFiles }) => {
     controls.enableZoom = true;
 
     const animate = () => {
-      requestRef.current = requestAnimationFrame(animate);
+      requestRef.current = setTimeout(() => {
+        requestAnimationFrame(animate);
 
-      controls.update();
+        controls.update();
 
-      renderer.render(scene, camera);
+        renderer.render(scene, camera);
+      }, 1000 / 30);
     };
 
     loader.load(absolutePath, (geometry) => {
@@ -59,30 +63,32 @@ const STLViewer = ({ stlFiles }) => {
       const aspectRatio = canvasAspect; // Use the canvas aspect ratio
       camera.aspect = aspectRatio;
 
-      // Set the distance between the camera and the center of the bounding box
       const distance = fitHeightDistance + maxSize / 4;
-
-      // Position the camera at the center of the bounding box, looking towards it
       camera.position.set(center.x, center.y, center.z + distance);
       camera.lookAt(center);
 
-      camera.far = distance * 2; // Adjust the far plane of the camera
-      camera.near = distance / 100; // Adjust the near plane of the camera
+      camera.far = distance * 2;
+      camera.near = distance / 100;
 
-      renderer.setSize(mount.clientWidth, mount.clientHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(
+        mountRef.current.clientWidth,
+        mountRef.current.clientHeight
+      );
+      renderer.setPixelRatio(1); // Use a lower pixel ratio
 
       animate();
     });
 
     return () => {
-      cancelAnimationFrame(requestRef.current);
+      clearTimeout(requestRef.current);
+      if (material) material.dispose(); // Dispose of the material
+      if (geometry) geometry.dispose(); // Dispose of the geometry
       if (rendererRef.current) {
         rendererRef.current.dispose();
-        mount.removeChild(rendererRef.current.domElement);
+        mountRef.current?.removeChild(rendererRef.current.domElement);
       }
     };
-  }, [stlFilePath]);
+  }, [stlFilePath, canvasAspect]);
 
   return (
     <>
