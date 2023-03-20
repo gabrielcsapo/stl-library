@@ -64,7 +64,7 @@ const STLViewer = ({ stlFile }) => {
   return (
     <div className={style.container}>
       <Link to={`/stl/${encodeURIComponent(stlFilePath)}`}>
-        <img ref={imgRef} style={{ cursor: "pointer" }} />
+        <img loading="lazy" ref={imgRef} style={{ cursor: "pointer" }} />
         <div>
           {stlFile.name} ({stlFile.size})
         </div>
