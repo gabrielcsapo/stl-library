@@ -1,4 +1,22 @@
+.container {
+  display: block;
+  background-color: var(--ifm-toc-border-color);
+  height: 100%;
+  width: 100%;
+}
+
 .stlViewer {
   background-color: var(--ifm-toc-border-color);
-  margin: -25px -16px;
+  margin: 0 -16px;
+  display: flex;
+  height: 100%;
+}
+
+.metadataSidebar {
+  border-left: 1px solid var(--ifm-toc-border-color);
+  background-color: white;
+  color: black;
+  opacity: "0.8";
+  padding: 10px;
+  max-width: 30%;
 }

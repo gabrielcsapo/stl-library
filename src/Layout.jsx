@@ -30,7 +30,6 @@ export default function Layout({ children }) {
       properties: ["openDirectory"],
     });
     if (!result.canceled) {
-      console.log("trying to set", result.filePaths[0]);
       setDirectoryText(result.filePaths[0]);
     }
   };
