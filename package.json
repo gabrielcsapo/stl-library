@@ -42,6 +42,7 @@
     "fs-extra": "^11.1.0",
     "image-data-uri": "^2.0.1",
     "infima": "^0.2.0-alpha.43",
+    "lodash": "^4.17.21",
     "path-browserify": "^1.0.1",
     "pretty-bytes": "^6.1.0",
     "react": "^18.2.0",

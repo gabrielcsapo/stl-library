@@ -3,20 +3,38 @@
   background-color: var(--ifm-toc-border-color);
   height: 100%;
   width: 100%;
+  display: flex;
 }
 
 .stlViewer {
   background-color: var(--ifm-toc-border-color);
-  margin: 0 -16px;
-  display: flex;
-  height: 100%;
+  min-width: 250px;
+  height: 500px;
+  flex-grow: 1;
+  flex-basis: 0;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.resizer {
+  flex-basis: 18px;
+
+  position: relative;
+  z-index: 2;
+  cursor: col-resize;
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(0, 0, 0, 0.4);
+  background: #333642;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .metadataSidebar {
+  position: relative;
   border-left: 1px solid var(--ifm-toc-border-color);
   background-color: white;
   color: black;
-  opacity: "0.8";
-  padding: 10px;
-  max-width: 30%;
+  opacity: 0.8;
+  padding: 16px;
 }

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import * as THREE from "three";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { debounce } from "lodash";
 
 import { SearchContext } from "../Layout";
 
@@ -91,10 +92,17 @@ const STLViewer = () => {
   const { stlFilePath } = useParams();
   const found = stlFiles.get(stlFilePath);
 
+  const resizerRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const parentRef = useRef(null);
   const mountRef = useRef(null);
   const rendererRef = useRef(null);
   const requestRef = useRef(null);
 
+  const [renderer, setRenderer] = useState(null);
+  const [camera, setCamera] = useState(null);
+  const [resizingSidebar, setResizingSidebar] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(window.innerWidth * 0.3);
   const [containerHeight, setContainerHeight] = useState(200);
   const [containerWidth, setContainerWidth] = useState(200);
   const [canvasAspect, setCanvasAspect] = useState(1);
@@ -110,21 +118,37 @@ const STLViewer = () => {
   useEffect(() => {
     const node = mountRef.current;
     if (node) {
-      const observer = new ResizeObserver(() => {
-        const { width, height } = node.getBoundingClientRect();
-        const aspect = width / height;
-        if (canvasAspect !== aspect) {
-          setCanvasAspect(width / height);
-        }
+      const observer = new ResizeObserver(
+        debounce(() => {
+          const { width, height } = node.getBoundingClientRect();
+          const aspect = width / height;
+          if (!resizingSidebar) {
+            if (canvasAspect !== aspect) {
+              setCanvasAspect(width / height);
 
-        if (containerWidth !== width) {
-          setContainerWidth(width);
-        }
+              if (camera) {
+                camera.aspect = aspect;
+              }
+            }
 
-        if (containerHeight !== height) {
-          setContainerHeight(height);
-        }
-      });
+            if (containerWidth !== width) {
+              setContainerWidth(width);
+
+              if (renderer) {
+                renderer.setSize(containerWidth, containerHeight);
+              }
+            }
+
+            if (containerHeight !== height) {
+              setContainerHeight(height);
+
+              if (renderer) {
+                renderer.setSize(containerWidth, containerHeight);
+              }
+            }
+          }
+        }, 500)
+      );
       observer.observe(node);
       return () => {
         observer.unobserve(node);
@@ -133,21 +157,85 @@ const STLViewer = () => {
   }, []);
 
   useEffect(() => {
+    const handleMouseDown = () => {
+      setResizingSidebar(true);
+    };
+
+    const handleMouseUp = () => {
+      setResizingSidebar(false);
+
+      const node = mountRef.current;
+      const { width, height } = node.getBoundingClientRect();
+      const aspect = width / height;
+      if (canvasAspect !== aspect) {
+        setCanvasAspect(width / height);
+
+        if (camera) {
+          camera.aspect = aspect;
+          camera.updateProjectionMatrix();
+        }
+      }
+      if (containerWidth !== width) {
+        setContainerWidth(width);
+
+        if (renderer) {
+          renderer.setSize(width, containerHeight);
+        }
+      }
+
+      if (containerHeight !== height) {
+        setContainerHeight(height);
+
+        if (renderer) {
+          renderer.setSize(containerWidth, height);
+        }
+      }
+    };
+
+    const handleMouseMove = (event) => {
+      if (resizingSidebar) {
+        if (event.clientX >= 200) {
+          setSidebarWidth(event.clientX);
+        }
+      }
+    };
+    const handle = resizerRef.current;
+    handle.addEventListener("mousedown", handleMouseDown);
+    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      handle.removeEventListener("mousedown", handleMouseDown);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [
+    parentRef.current,
+    resizingSidebar,
+    sidebarWidth,
+    setSidebarWidth,
+    setResizingSidebar,
+  ]);
+
+  useEffect(() => {
     if (!mountRef.current) return;
-    let renderer, camera, scene, geometry, material, mesh, controls;
+    let _camera, _renderer, scene, geometry, material, mesh, controls;
 
     const loader = new STLLoader();
 
     const absolutePath = `file://${stlFilePath}`;
 
-    camera = new THREE.PerspectiveCamera(75, canvasAspect, 0.1, 1000);
+    _camera = new THREE.PerspectiveCamera(75, canvasAspect, 0.1, 1000);
+    setCamera(_camera);
 
-    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
-    renderer.setClearColor(0xffffff, 0);
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
+    _renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+    setRenderer(_renderer);
 
-    controls = new OrbitControls(camera, renderer.domElement);
+    _renderer.setClearColor(0xffffff, 0);
+    mountRef.current.appendChild(_renderer.domElement);
+    rendererRef.current = _renderer;
+
+    controls = new OrbitControls(_camera, _renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.25;
     controls.enableZoom = true;
@@ -159,7 +247,7 @@ const STLViewer = () => {
         if (!skipFrame) {
           controls.update();
 
-          renderer.render(scene, camera);
+          _renderer.render(scene, _camera);
         }
 
         skipFrame = !skipFrame;
@@ -180,19 +268,19 @@ const STLViewer = () => {
 
       const maxSize = Math.max(size.x, size.y, size.z);
       const fitHeightDistance =
-        maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
+        maxSize / (2 * Math.atan((Math.PI * _camera.fov) / 360));
       const aspectRatio = canvasAspect; // Use the canvas aspect ratio
-      camera.aspect = aspectRatio;
+      _camera.aspect = aspectRatio;
 
       const distance = fitHeightDistance + maxSize / 4;
-      camera.position.set(center.x, center.y, center.z + distance);
-      camera.lookAt(center);
+      _camera.position.set(center.x, center.y, center.z + distance);
+      _camera.lookAt(center);
 
-      camera.far = distance * 2;
-      camera.near = distance / 100;
+      _camera.far = distance * 2;
+      _camera.near = distance / 100;
 
-      renderer.setSize(containerWidth, containerHeight);
-      renderer.setPixelRatio(1); // Use a lower pixel ratio
+      _renderer.setSize(containerWidth, containerHeight);
+      _renderer.setPixelRatio(1); // Use a lower pixel ratio
 
       // Calculate and set model metadata
       const dimensions = {
@@ -243,50 +331,51 @@ const STLViewer = () => {
         mountRef.current?.removeChild(rendererRef.current.domElement);
       }
     };
-  }, [stlFilePath, canvasAspect, found, containerHeight, containerWidth]);
+  }, [stlFilePath, found]);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.stlViewer}>
-        <div
-          style={{ maxWidth: "80%", height: "500px", flexGrow: "1" }}
-          ref={mountRef}
-        />
-        <div className={styles.metadataSidebar}>
-          {dimensions ? (
-            <>
-              {found ? (
-                <>
-                  <p>File:</p>
-                  <ul>
-                    <li>{found.name}</li>
-                    <li>{found.path}</li>
-                    <li>{found.size}</li>
-                  </ul>
-                </>
-              ) : null}
-              <p>Dimensions:</p>
-              <ul>
-                <li>Width: {dimensions.width} mm</li>
-                <li>Height: {dimensions.height} mm</li>
-                <li>Depth: {dimensions.depth} mm</li>
-              </ul>
-              <p>Volume: {volume} mm³</p>
-              <p>Surface Area: {surfaceArea} mm²</p>
-              <p>Number of Facets: {numFacets}</p>
-              <p>Bounding Box:</p>
-              <ul>
-                <li>Width: {boundingBox?.width} mm</li>
-                <li>Height: {boundingBox?.height} mm</li>
-                <li>Depth: {boundingBox?.depth} mm</li>
-              </ul>
-              <p>File Format: {fileFormat}</p>
-              <p>Units: {units}</p>
-              <p>Creation/Modification Date: {creationDate}</p>
-            </>
-          ) : null}
-        </div>
+    <div className={styles.container} ref={parentRef}>
+      <div
+        id="metadataSidebar"
+        className={`${styles.metadataSidebar} metadataSidebar`}
+        style={{ width: sidebarWidth + "px" }}
+        ref={sidebarRef}
+      >
+        {dimensions ? (
+          <>
+            {found ? (
+              <>
+                <p>File:</p>
+                <ul>
+                  <li>{found.name}</li>
+                  <li>{found.path}</li>
+                  <li>{found.size}</li>
+                </ul>
+              </>
+            ) : null}
+            <p>Dimensions:</p>
+            <ul>
+              <li>Width: {dimensions.width} mm</li>
+              <li>Height: {dimensions.height} mm</li>
+              <li>Depth: {dimensions.depth} mm</li>
+            </ul>
+            <p>Volume: {volume} mm³</p>
+            <p>Surface Area: {surfaceArea} mm²</p>
+            <p>Number of Facets: {numFacets}</p>
+            <p>Bounding Box:</p>
+            <ul>
+              <li>Width: {boundingBox?.width} mm</li>
+              <li>Height: {boundingBox?.height} mm</li>
+              <li>Depth: {boundingBox?.depth} mm</li>
+            </ul>
+            <p>File Format: {fileFormat}</p>
+            <p>Units: {units}</p>
+            <p>Creation/Modification Date: {creationDate}</p>
+          </>
+        ) : null}
       </div>
+      <div className={styles.resizer} ref={resizerRef} />
+      <div className={styles.stlViewer} ref={mountRef} />
     </div>
   );
 };

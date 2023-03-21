@@ -19,6 +19,9 @@ export default function Layout({ children }) {
   useEffect(() => {
     if (!directoryText) return;
 
+    // we need to reset the selection of stl files
+    setSTLFiles(new Map());
+
     window.electron.scanForSTLFiles(directoryText, (fileFound) => {
       setSTLFiles((map) => new Map(map.set(fileFound.path, fileFound)));
     });
