@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@electron/remote": "^2.0.9",
+    "chokidar": "^3.5.3",
     "fast-glob": "^3.2.12",
     "fs-extra": "^11.1.0",
     "image-data-uri": "^2.0.1",

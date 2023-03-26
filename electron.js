@@ -4,8 +4,11 @@ const path = require("path");
 const fastGlob = require("fast-glob");
 const crypto = require("crypto");
 const imageDataURI = require("image-data-uri");
+const chokidar = require("chokidar");
 
 require("@electron/remote/main").initialize();
+
+let watcher;
 
 async function getRenderedSTLPng(filePath) {
   const stlData = await fs.readFile(filePath);
@@ -64,9 +67,18 @@ ipcMain.on("render-stl", async (event, stlFilePath, imageData) => {
 
 ipcMain.on("scan-for-stl-files", async (event, startDir) => {
   const prettyBytes = await import("pretty-bytes");
-  const filesFound = await fastGlob(`${startDir}/**/*.stl`);
 
-  for (const filePath of filesFound) {
+  if (watcher) {
+    await watcher.close();
+  }
+
+  watcher = chokidar.watch(`${startDir}/**/*.stl`, {
+    persistent: true,
+  });
+
+  watcher.on("add", async (filePath) => {
+    if (filePath.indexOf(".stl") === -1) return;
+
     const stats = await fs.stat(filePath);
     const renderedSTLPng = await getRenderedSTLPng(filePath);
 
@@ -76,7 +88,7 @@ ipcMain.on("scan-for-stl-files", async (event, startDir) => {
       image: renderedSTLPng,
       size: prettyBytes.default(stats.size),
     });
-  }
+  });
 });
 
 app.on("activate", () => {
